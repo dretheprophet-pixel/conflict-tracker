@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="description" content="Live conflict tracker — US, Israel, Iran. Neutral briefings from trusted sources.">
+<title>Conflict Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111111;
+  --bg3: #181818;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0ede8;
+  --text2: #8a8680;
+  --text3: #4a4845;
+  --accent: #c8a96e;
+  --accent2: #7ba3c8;
+  --dip: #7ba3c8;
+  --dip-bg: rgba(123,163,200,0.1);
+  --hum: #7bc8a4;
+  --hum-bg: rgba(123,200,164,0.1);
+  --mil: #c87b7b;
+  --mil-bg: rgba(200,123,123,0.1);
+  --int: #c8b87b;
+  --int-bg: rgba(200,184,123,0.1);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.masthead {
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.masthead-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.logo-bar {
+  width: 14px;
+  height: 1.5px;
+  background: var(--accent);
+}
+
+.masthead-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.masthead-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+  padding-left: 16px;
+  border-left: 1px solid var(--border2);
+}
+
+.masthead-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.3s;
+}
+
+.live-dot.active {
+  background: #6ccc88;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.last-updated {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  height: 32px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  padding: 0 14px;
+  border-right: 1px solid var(--border2);
+  white-space: nowrap;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--bg2);
+  z-index: 1;
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: ticker-scroll 40s linear infinite;
+  padding-left: 24px;
+}
+
+.ticker-track:hover { animation-play-state: paused; }
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  margin-right: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticker-item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border2);
+  flex-shrink: 0;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 88px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+  position: sticky;
+  top: 88px;
+  height: calc(100vh - 88px);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: 0 16px;
+  margin-bottom: 28px;
+}
+
+.sidebar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 300;
+  text-align: left;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+}
+
+.filter-btn:hover { background: var(--bg3); color: var(--text); }
+
+.filter-btn.active { background: var(--bg3); color: var(--text); }
+
+.filter-btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-btn .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.dot-all { background: var(--text2); }
+.dot-diplomatic { background: var(--dip); }
+.dot-humanitarian { background: var(--hum); }
+.dot-military { background: var(--mil); }
+.dot-international { background: var(--int); }
+
+.divider { height: 1px; background: var(--border); margin: 0 16px 24px; }
+
+.fetch-section { padding: 0 16px; }
+
+.fetch-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.fetch-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.fetch-btn.loading { border-color: var(--accent); }
+
+.spin {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+
+.fetch-btn.loading .spin { display: block; }
+
+.sources-list {
+  margin-top: 16px;
+}
+
+.source-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  padding: 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-item::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text3);
+}
+
+/* ── MAIN FEED ── */
+.main {
+  padding: 24px 28px;
+}
+
+.feed-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+
+.feed-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ── CARDS ── */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.card {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  transition: all 0.2s;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: card-in 0.3s ease forwards;
+}
+
+@keyframes card-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card:last-child { border-bottom: none; }
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.card-cat {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cat-diplomatic { color: var(--dip); background: var(--dip-bg); }
+.cat-humanitarian { color: var(--hum); background: var(--hum-bg); }
+.cat-military { color: var(--mil); background: var(--mil-bg); }
+.cat-international { color: var(--int); background: var(--int-bg); }
+
+.card-headline {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.card-summary {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-bottom: 12px;
+  padding-left: 0;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-source-link {
+  color: var(--text3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.card-source-link:hover { color: var(--accent2); }
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.card-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text3);
+  transition: all 0.15s;
+}
+
+.card-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  gap: 16px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0.4;
+}
+
+.empty-bar {
+  width: 22px;
+  height: 1.5px;
+  background: var(--text2);
+}
+
+.empty-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  letter-spacing: 0.04em;
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: var(--text3);
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+/* ── STATUS BAR ── */
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 24px;
+  z-index: 50;
+}
+
+.status-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-item.ok { color: #6ccc88; }
+.status-item.warn { color: var(--accent); }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  display: none;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  margin: 16px;
+  padding: 12px 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.install-banner.visible { display: flex; }
+
+.install-text {
+  font-size: 12px;
+  color: var(--text2);
+  flex: 1;
+}
+
+.install-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.install-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── MOBILE ── */
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    display: flex;
+    overflow-x: auto;
+    gap: 0;
+  }
+  .sidebar-section { white-space: nowrap; margin-bottom: 0; display: flex; align-items: center; gap: 4px; }
+  .sidebar-label { display: none; }
+  .filter-btn { width: auto; }
+  .divider { display: none; }
+  .fetch-section { padding: 0 12px; }
+  .fetch-btn { width: auto; white-space: nowrap; }
+  .sources-list { display: none; }
+  .masthead-sub { display: none; }
+  .main { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-left">
+    <div class="logo-mark">
+      <div class="logo-bar"></div>
+      <div class="logo-bar"></div>
+      <div class="logo-bar"></div>
+    </div>
+    <span class="masthead-title">CONFLICT TRACKER</span>
+    <span class="masthead-sub">US &middot; ISRAEL &middot; IRAN</span>
+  </div>
+  <div class="masthead-right">
+    <div class="live-dot" id="liveDot"></div>
+    <span class="last-updated" id="lastUpdated">—</span>
+  </div>
+</header>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">LIVE FEED</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item">Click "Fetch briefing" to load latest headlines</span>
+    <span class="ticker-item">Sources: Reuters · BBC · NPR · PBS · AP</span>
+    <span class="ticker-item">Neutral, fact-based reporting only</span>
+    <span class="ticker-item">All four categories tracked: diplomatic · humanitarian · military · international</span>
+    <span class="ticker-item">Click "Fetch briefing" to load latest headlines</span>
+    <span class="ticker-item">Sources: Reuters · BBC · NPR · PBS · AP</span>
+    <span class="ticker-item">Neutral, fact-based reporting only</span>
+    <span class="ticker-item">All four categories tracked: diplomatic · humanitarian · military · international</span>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="installBanner">
+  <span class="install-text">Install this tracker as an app for quick taskbar access.</span>
+  <button class="install-btn" id="installBtn">Install app</button>
+  <button class="install-dismiss" id="dismissInstall">&times;</button>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">FILTER</div>
+      <button class="filter-btn active" data-cat="all" onclick="setFilter('all')">
+        <span class="dot dot-all"></span>
+        All updates
+        <span class="count" id="count-all">0</span>
+      </button>
+      <button class="filter-btn" data-cat="diplomatic" onclick="setFilter('diplomatic')">
+        <span class="dot dot-diplomatic"></span>
+        Diplomatic
+        <span class="count" id="count-diplomatic">0</span>
+      </button>
+      <button class="filter-btn" data-cat="humanitarian" onclick="setFilter('humanitarian')">
+        <span class="dot dot-humanitarian"></span>
+        Humanitarian
+        <span class="count" id="count-humanitarian">0</span>
+      </button>
+      <button class="filter-btn" data-cat="military" onclick="setFilter('military')">
+        <span class="dot dot-military"></span>
+        Military
+        <span class="count" id="count-military">0</span>
+      </button>
+      <button class="filter-btn" data-cat="international" onclick="setFilter('international')">
+        <span class="dot dot-international"></span>
+        International
+        <span class="count" id="count-international">0</span>
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="fetch-section">
+      <button class="fetch-btn" id="fetchBtn" onclick="fetchBriefing()">
+        <div class="spin" id="spin"></div>
+        <span id="fetchLabel">Fetch briefing</span>
+      </button>
+      <div class="sources-list">
+        <div class="sidebar-label" style="margin-top:14px">TRUSTED SOURCES</div>
+        <div class="source-item">Reuters</div>
+        <div class="source-item">BBC News</div>
+        <div class="source-item">NPR</div>
+        <div class="source-item">PBS NewsHour</div>
+        <div class="source-item">Associated Press</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN FEED -->
+  <main class="main">
+    <div class="feed-header">
+      <span class="feed-title" id="feedTitle">ALL UPDATES</span>
+      <span class="feed-count" id="feedCount">0 items</span>
+    </div>
+    <div class="feed" id="feed">
+      <div class="empty">
+        <div class="empty-icon">
+          <div class="empty-bar"></div>
+          <div class="empty-bar"></div>
+          <div class="empty-bar"></div>
+        </div>
+        <div class="empty-title">No briefing loaded</div>
+        <div class="empty-sub">Click "Fetch briefing" in the sidebar to pull the latest news from trusted sources.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span class="status-item" id="statusMain">Ready</span>
+  <span class="status-item" style="margin-left:auto">Reuters · BBC · NPR · PBS · AP</span>
+  <span class="status-item">v1.0</span>
+</div>
+
+<script>
+let allUpdates = [];
+let activeFilter = 'all';
+let deferredPrompt = null;
+
+// PWA install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('visible');
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('visible');
+});
+
+document.getElementById('dismissInstall').addEventListener('click', () => {
+  document.getElementById('installBanner').classList.remove('visible');
+});
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  renderFeed();
+}
+
+function updateCounts() {
+  const cats = ['diplomatic','humanitarian','military','international'];
+  document.getElementById('count-all').textContent = allUpdates.length;
+  cats.forEach(c => {
+    document.getElementById('count-' + c).textContent = allUpdates.filter(u => u.category === c).length;
+  });
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  const titles = { all:'ALL UPDATES', diplomatic:'DIPLOMATIC', humanitarian:'HUMANITARIAN', military:'MILITARY', international:'INTERNATIONAL' };
+  document.getElementById('feedTitle').textContent = titles[activeFilter] || 'ALL UPDATES';
+
+  let items = activeFilter === 'all' ? allUpdates : allUpdates.filter(u => u.category === activeFilter);
+  document.getElementById('feedCount').textContent = items.length + ' item' + (items.length !== 1 ? 's' : '');
+
+  if (items.length === 0 && allUpdates.length === 0) {
+    feed.innerHTML = `<div class="empty">
+      <div class="empty-icon"><div class="empty-bar"></div><div class="empty-bar"></div><div class="empty-bar"></div></div>
+      <div class="empty-title">No briefing loaded</div>
+      <div class="empty-sub">Click "Fetch briefing" in the sidebar to pull the latest news from trusted sources.</div>
+    </div>`;
+    return;
+  }
+
+  if (items.length === 0) {
+    feed.innerHTML = `<div class="empty">
+      <div class="empty-icon"><div class="empty-bar"></div><div class="empty-bar"></div><div class="empty-bar"></div></div>
+      <div class="empty-title">No items in this category</div>
+      <div class="empty-sub">Try fetching a new briefing or switching to "All updates."</div>
+    </div>`;
+    return;
+  }
+
+  feed.innerHTML = items.map((u, i) => `
+    <div class="card" style="animation-delay:${i * 0.05}s">
+      <div class="card-top">
+        <span class="card-cat cat-${u.category}">${u.category.toUpperCase()}</span>
+        <div class="card-headline">${escHtml(u.headline)}</div>
+      </div>
+      <div class="card-summary">${escHtml(u.summary)}</div>
+      <div class="card-footer">
+        <div class="card-meta">
+          <span>${escHtml(u.date || '')}</span>
+          ${u.url ? `<a class="card-source-link" href="${escHtml(u.url)}" target="_blank" rel="noopener">${escHtml(u.source)} &rarr;</a>` : `<span>${escHtml(u.source)}</span>`}
+        </div>
+        <div class="card-actions">
+          <button class="card-btn" onclick="openContextMenu('${escAttr(u.headline)}')">+ Context</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+
+function openContextMenu(headline) {
+  const query = encodeURIComponent('Explain more context about this news item in the US-Israel-Iran conflict: ' + headline);
+  window.open('https://claude.ai/new?q=' + query, '_blank');
+}
+
+function updateTicker(updates) {
+  const track = document.getElementById('tickerTrack');
+  if (!updates || updates.length === 0) return;
+  const items = [...updates, ...updates];
+  track.innerHTML = items.map(u =>
+    `<span class="ticker-item">${escHtml(u.headline)}</span>`
+  ).join('');
+}
+
+async function fetchBriefing() {
+  const btn = document.getElementById('fetchBtn');
+  const spin = document.getElementById('spin');
+  const label = document.getElementById('fetchLabel');
+  const dot = document.getElementById('liveDot');
+  const status = document.getElementById('statusMain');
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  spin.style.display = 'block';
+  label.textContent = 'Fetching...';
+  dot.classList.remove('active');
+  status.textContent = 'Querying sources...';
+  status.className = 'status-item warn';
+
+  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+
+  const prompt = `You are a neutral, fact-based conflict news summarizer. Today is ${today}.
+
+Search the web for the very latest news (past 48 hours) about the US-Israel-Iran conflict. Cover all four categories: diplomatic negotiations, humanitarian conditions, military developments, and international reactions.
+
+Return ONLY a valid JSON array — no markdown, no code fences, no explanation. Each object must have exactly these keys:
+- headline: concise factual headline, max 14 words
+- summary: 2-3 sentence neutral factual summary
+- category: exactly one of: diplomatic, humanitarian, military, international
+- source: exactly one of: Reuters, BBC, NPR, PBS, AP
+- url: direct article URL string, or null
+- date: short date like "Mar 19, 2026"
+
+Return 8-10 items covering a mix of all four categories. Be strictly factual, neutral, and sourced only from Reuters, BBC, NPR, PBS, or AP. No opinion. No framing. Just facts.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    let raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    raw = raw.replace(/```json|```/g, '').trim();
+    const s = raw.indexOf('['), e = raw.lastIndexOf(']');
+    const parsed = JSON.parse(raw.substring(s, e + 1));
+
+    allUpdates = parsed;
+    updateCounts();
+    renderFeed();
+    updateTicker(parsed);
+
+    const now = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    document.getElementById('lastUpdated').textContent = now;
+    dot.classList.add('active');
+    status.textContent = parsed.length + ' updates loaded · ' + now;
+    status.className = 'status-item ok';
+    label.textContent = 'Refresh';
+  } catch(err) {
+    status.textContent = 'Fetch failed — try again';
+    status.className = 'status-item warn';
+    label.textContent = 'Retry';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    spin.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
