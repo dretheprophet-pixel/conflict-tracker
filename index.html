@@ -889,7 +889,7 @@ Return ONLY a valid JSON array — no markdown, no code fences, no explanation. 
 Return 8-10 items covering a mix of all four categories. Be strictly factual, neutral, and sourced only from Reuters, BBC, NPR, PBS, or AP. No opinion. No framing. Just facts.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://conflict-tracker-prox.vercel.app/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
