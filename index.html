@@ -874,7 +874,7 @@ async function fetchBriefing() {
 
   const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
 
-  const prompt = `You are a neutral, fact-based conflict news summarizer. Today is ${today}.
+  const prompt = `You are a conflict news data API. Today is ${today}. Do NOT write any conversational text, preamble, or explanation before or after. Your entire response must be ONLY a raw JSON array and nothing else.
 
 Search the web for the very latest news (past 48 hours) about the US-Israel-Iran conflict. Cover all four categories: diplomatic negotiations, humanitarian conditions, military developments, and international reactions.
 
@@ -909,19 +909,22 @@ Return 8-10 items covering a mix of all four categories. Be strictly factual, ne
       buffer += decoder.decode(value, { stream: true });
     }
 
-    // Extract text blocks from SSE stream
-    let rawText = '';
-    const lines = buffer.split('\n');
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        try {
-          const evt = JSON.parse(line.slice(6));
-          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-            rawText += evt.delta.text;
-          }
-        } catch {}
+// Collect all text blocks, keyed by block index
+const blocks = {};
+const lines = buffer.split('\n');
+for (const line of lines) {
+  if (line.startsWith('data: ')) {
+    try {
+      const evt = JSON.parse(line.slice(6));
+      if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+        blocks[evt.index] = (blocks[evt.index] || '') + evt.delta.text;
       }
-    }
+    } catch {}
+  }
+}
+// Use the last text block — that's where the JSON lives after tool use
+const blockValues = Object.values(blocks);
+let rawText = blockValues[blockValues.length - 1] || '';
 
     rawText = rawText.replace(/```json|```/g, '').trim();
     const s = rawText.indexOf('['), e = rawText.lastIndexOf(']');
