@@ -893,18 +893,39 @@ Return 8-10 items covering a mix of all four categories. Be strictly factual, ne
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
-    const data = await res.json();
-    let raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    raw = raw.replace(/```json|```/g, '').trim();
-    const s = raw.indexOf('['), e = raw.lastIndexOf(']');
-    const parsed = JSON.parse(raw.substring(s, e + 1));
+    if (!res.ok) throw new Error('Proxy returned ' + res.status);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+    }
+
+    // Extract text blocks from SSE stream
+    let rawText = '';
+    const lines = buffer.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const evt = JSON.parse(line.slice(6));
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            rawText += evt.delta.text;
+          }
+        } catch {}
+      }
+    }
+
+    rawText = rawText.replace(/```json|```/g, '').trim();
+    const s = rawText.indexOf('['), e = rawText.lastIndexOf(']');
+    const parsed = JSON.parse(rawText.substring(s, e + 1));
 
     allUpdates = parsed;
     updateCounts();
@@ -928,6 +949,3 @@ Return 8-10 items covering a mix of all four categories. Be strictly factual, ne
     spin.style.display = 'none';
   }
 }
-</script>
-</body>
-</html>
